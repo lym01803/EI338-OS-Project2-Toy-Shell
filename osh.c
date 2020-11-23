@@ -6,13 +6,15 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define LINE_MAX_LENGTH     80
+#define LINE_MAX_LENGTH    160
 #define INVALID_SYNTAX       1
 #define NO_HISTORY           2
 #define OPEN_FILE_FAILED     4
 #define PIPE_FAILED          8
 #define FORK_FAILED         16
 #define EXIT                32
+
+FILE* logfile;
 
 typedef struct exp_node{
     int l;
@@ -170,6 +172,8 @@ int exec_exp(struct exp_node* exp, struct exec_info fa_info, char** args, char**
     }
     else if (!strcmp(exp->arg, "|")){
         //printf("Left : %s ; Right %s\n", exp->operands[0]->arg, exp->operands[1]->arg);
+        fprintf(logfile, "Left : %s ; Right %s ; fd_in %d ; fd_out %d;\n", exp->operands[0]->arg, exp->operands[1]->arg, info.fd_in, info.fd_out);
+        fflush(logfile);
         if (pipe(pipe_fd) == -1){
             return PIPE_FAILED;
         }
@@ -221,7 +225,12 @@ int exec_exp(struct exp_node* exp, struct exec_info fa_info, char** args, char**
             return 0;
         }
         else{
-            //printf("%d %d %s\n", info.fd_in, info.fd_out, ccmd);
+            fprintf(logfile, "%d %d %s\n", info.fd_in, info.fd_out, ccmd);
+            for(int i = 0; arglist[i] != NULL; ++i){
+                fprintf(logfile, "%s ", arglist[i]);
+            }
+            fprintf(logfile, "\n");
+            fflush(logfile);
             //fflush(stdout);
             if (info.fd_in != -1){
                 dup2(info.fd_in, STDIN_FILENO);
@@ -254,7 +263,31 @@ void mark_his_exp_tree(struct exp_node* rt){
 }
 
 void deal_with_state(int s){
-    printf("ERROR %d \n", s);
+    /*
+#define INVALID_SYNTAX       1
+#define NO_HISTORY           2
+#define OPEN_FILE_FAILED     4
+#define PIPE_FAILED          8
+#define FORK_FAILED         16
+#define EXIT                32
+    */
+    if (s & 1){
+        printf("Invalid syntax. ");
+    }
+    if ((s >> 1) & 1){
+        printf("No history. ");
+    }
+    if ((s >> 2) & 1){
+        printf("Open file failed. ");
+    }
+    if ((s >> 3) & 1){
+        printf("Pipe failed. ");
+    }
+    if ((s >> 4) & 1){
+        printf("Fork failed. ");
+    }
+    printf("\n");
+    fflush(stdout);
 }
 
 int replace_history(char** args, char** his_args, int* arg_num, int his_arg_num){
@@ -302,6 +335,8 @@ int main(){
     int state;
     struct exec_info info;
     
+    logfile = fopen("./log.txt", "w");
+
     info.wait_flag = 1;
     info.fd_in = -1;
     info.fd_out = -1;
@@ -350,5 +385,8 @@ int main(){
             }
         }
     }
+    
+    fclose(logfile);
+
     return 0;
 }
