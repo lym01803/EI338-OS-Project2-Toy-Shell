@@ -16,16 +16,16 @@
 
 FILE* logfile;
 
-typedef struct exp_node{
-    int l;
-    int r;
-    int operand_num;
-    char* arg;
+typedef struct exp_node{ //语法树节点; l, r记录参数字符串的位置; operand_num 记录子节点数目; operands 记录子节点指针; his 已弃用 
+    int                      l;
+    int                      r;
+    int            operand_num;
+    char*                  arg;
     struct exp_node** operands;
-    int his;
+    int                    his;
 };
 
-struct exp_node* new_node(int l, int r, int operand_num, char* arg){
+struct exp_node* new_node(int l, int r, int operand_num, char* arg){ //创建一个初始化的语法树节点
     struct exp_node* nd = (struct exp_node*)malloc(sizeof(struct exp_node));
     nd->l = l;
     nd->r = r;
@@ -44,12 +44,12 @@ struct exp_node* new_node(int l, int r, int operand_num, char* arg){
     return nd;
 }
 
-int cmd_split(char** args, char* cmd){
-    int l = 0;
-    int r = 0;
+int cmd_split(char** args, char* cmd){ //字符串命令切分 以空格为界
+    int             l = 0;
+    int             r = 0;
     int len = strlen(cmd);
-    int arg_num = 0;
-    char tmp;
+    int       arg_num = 0;
+    char              tmp;
     while (r < len - 1){
         while (cmd[l] == ' '){
             ++l;
@@ -74,12 +74,12 @@ int cmd_split(char** args, char* cmd){
     return arg_num;
 }
 
-struct exp_node* args_parse(char** args, int len, int* state, struct exp_node* his_rt){
-    int i = 0;
-    char* arg;
-    struct exp_node* rt;
-    struct exp_node* tmp;
-    struct exp_node** cur;
+struct exp_node* args_parse(char** args, int len, int* state, struct exp_node* his_rt){ //参数解析，生成语法树，返回根节点
+    int                 i = 0;
+    char*                 arg;
+    struct exp_node*       rt;
+    struct exp_node*      tmp;
+    struct exp_node**     cur;
     rt = NULL;
     cur = &rt;
     *state = 0;
@@ -131,18 +131,18 @@ struct exp_node* args_parse(char** args, int len, int* state, struct exp_node* h
     return rt;
 }
 
-typedef struct exec_info{
+typedef struct exec_info{ //命令执行时信息
     int wait_flag;
-    int fd_in;
-    int fd_out;
+    int     fd_in;
+    int    fd_out;
 };
 
-int exec_exp(struct exp_node* exp, struct exec_info fa_info, char** args, char** his_args){
+int exec_exp(struct exp_node* exp, struct exec_info fa_info, char** args, char** his_args){ //执行命令
     if (exp == NULL){
         return INVALID_SYNTAX;
     }
-    int state;
-    int pipe_fd[2];
+    int             state;
+    int        pipe_fd[2];
     struct exec_info info;
     info = fa_info;
     if (!strcmp(exp->arg, "&")){
@@ -243,7 +243,7 @@ int exec_exp(struct exp_node* exp, struct exec_info fa_info, char** args, char**
     }
 }
 
-void free_exp_tree(struct exp_node* rt){
+void free_exp_tree(struct exp_node* rt){ // 已弃用
     for(int i = 0; i < rt->operand_num; ++i){
         if (rt->operands[i] != NULL){
             free_exp_tree(rt->operands[i]);
@@ -253,7 +253,7 @@ void free_exp_tree(struct exp_node* rt){
     free(rt);
 }
 
-void mark_his_exp_tree(struct exp_node* rt){
+void mark_his_exp_tree(struct exp_node* rt){ //已弃用
     for(int i = 0; i < rt->operand_num; ++i){
         if (rt->operands[i] != NULL){
             mark_his_exp_tree(rt->operands[i]);
@@ -262,7 +262,7 @@ void mark_his_exp_tree(struct exp_node* rt){
     rt->his = 1;
 }
 
-void deal_with_state(int s){
+void deal_with_state(int s){ //处理异常情况
     /*
 #define INVALID_SYNTAX       1
 #define NO_HISTORY           2
@@ -290,7 +290,7 @@ void deal_with_state(int s){
     fflush(stdout);
 }
 
-int replace_history(char** args, char** his_args, int* arg_num, int his_arg_num){
+int replace_history(char** args, char** his_args, int* arg_num, int his_arg_num){ //支持历史记录替换
     int cnt = 0;
     for (int i = 0; i < *arg_num; ++i){
         if (!strcmp(args[i], "!!")){
@@ -323,17 +323,17 @@ int replace_history(char** args, char** his_args, int* arg_num, int his_arg_num)
 }
 
 int main(){
-    int should_run = 1;
-    char* cmd;
-    char** args;
-    char** his_args;
-    int cmd_length;
-    int arg_num;
-    int his_arg_num = 0;
-    struct exp_node* exp_rt;
-    struct exp_node* his_rt;
-    int state;
-    struct exec_info info;
+    int             should_run = 1;
+    char*                      cmd;
+    char**                    args;
+    char**                his_args;
+    int                 cmd_length;
+    int                    arg_num;
+    int            his_arg_num = 0;
+    struct exp_node*        exp_rt;
+    struct exp_node*        his_rt;
+    int                      state;
+    struct exec_info          info;
     
     logfile = fopen("./log.txt", "w");
 
@@ -349,7 +349,7 @@ int main(){
         args[i] = his_args[i] = NULL;
     }
     
-    while (should_run){
+    while (should_run){ //shell主体
         printf("osh>");
         fflush(stdout);
         fgets(cmd, LINE_MAX_LENGTH, stdin);
