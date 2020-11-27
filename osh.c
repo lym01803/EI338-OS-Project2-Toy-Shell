@@ -210,11 +210,7 @@ int exec_exp(struct exp_node* exp, struct exec_info fa_info, char** args, char**
         }
         if (pid > 0){
             if (info.wait_flag){
-                //printf("haha\n");
-                //fflush(stdout);
                 waitpid(pid, NULL, 0);
-                //printf("ahah\n");
-                //fflush(stdout);
             }
             if(info.fd_in != -1){
                 close(info.fd_in);
